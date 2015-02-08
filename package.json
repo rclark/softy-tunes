@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rclark/muzak.git"
+    "url": "https://github.com/rclark/softy-tunes.git"
   },
   "author": "Ryan Clark",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/rclark/muzak/issues"
+    "url": "https://github.com/rclark/softy-tunes/issues"
   },
-  "homepage": "https://github.com/rclark/muzak",
+  "homepage": "https://github.com/rclark/softy-tunes",
   "dependencies": {
     "aws-sdk": "^2.1.8",
     "inquirer": "^0.8.0",
