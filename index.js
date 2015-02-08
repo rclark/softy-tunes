@@ -1,5 +1,5 @@
 var AWS = require('aws-sdk'),
-    S3 = new AWS.S3(),
+    s3 = new AWS.S3(),
     queue = require('queue-async'),
     mkdirp = require('mkdirp'),
     path = require('path'),
@@ -11,9 +11,10 @@ var AWS = require('aws-sdk'),
 module.exports.listArtists = listArtists;
 module.exports.listAlbums = listAlbums;
 module.exports.getAlbum = getAlbum;
+module.exports.uploadAlbum = uploadAlbum;
 
 function listArtists(callback) {
-  S3.listObjects({
+  s3.listObjects({
     Bucket: bucket,
     Prefix: '',
     Delimiter: '/'
@@ -27,7 +28,7 @@ function listArtists(callback) {
 }
 
 function listAlbums(artist, callback) {
-  S3.listObjects({
+  s3.listObjects({
     Bucket: bucket,
     Prefix: artist + '/',
     Delimiter: '/'
@@ -56,7 +57,7 @@ function getAlbum(artist, album, folder, callback) {
 
   function listSongs(err) {
     if (err) return callback(err);
-    S3.listObjects({
+    s3.listObjects({
       Bucket: bucket,
       Prefix: artist + '/' + album
     }, downloadSongs);
@@ -87,7 +88,7 @@ function getAlbum(artist, album, folder, callback) {
       outfile = fs.createWriteStream(path.join(folder, name));
 
       q.defer(function(next) {
-        S3.getObject({ Bucket: bucket, Key: item.Key })
+        s3.getObject({ Bucket: bucket, Key: item.Key })
           .createReadStream()
           .once('error', next)
           .on('data', function(chunk) { progress.write(chunk.length); })
@@ -96,6 +97,70 @@ function getAlbum(artist, album, folder, callback) {
       });
     });
     q.await(function() {
+      progress.on('finish', callback);
+      progress.end();
+    });
+  }
+
+  return progress;
+}
+
+function uploadAlbum(artist, album, folder, callback) {
+  callback = callback || function() {};
+  var progress = new stream.Writable({ objectMode: true });
+
+  progress.sent = {};
+  progress.setMaxListeners(1000);
+  progress._write = function(info, enc, callback) {
+    progress.sent[info.file] = info.loaded;
+
+    var sent = Object.keys(progress.sent).reduce(function(sent, key) {
+      sent += progress.sent[key];
+      return sent;
+    }, 0);
+
+    this.emit('progress', Math.round(100 * sent / progress.total));
+    callback();
+  };
+
+  fs.readdir(folder, function(err, files) {
+    if (err) return callback(err);
+
+    var q = queue();
+    files.forEach(function(filename) {
+      q.defer(fs.stat.bind(fs), path.join(folder, filename));
+    });
+    q.awaitAll(function(err, stats) {
+      if (err) return callback(err);
+      progress.total = stats.reduce(function(total, stat) {
+        total += stat.size;
+        return total;
+      }, 0);
+
+      uploadFiles(files);
+    });
+  });
+
+  function uploadFiles(files) {
+    var q = queue();
+    files.forEach(function(filename) {
+      q.defer(function(next) {
+        s3.putObject({
+          Bucket: bucket,
+          Key: [artist, album, filename].join('/'),
+          Body: fs.createReadStream(path.join(folder, filename))
+        }).on('httpUploadProgress', function(prog) {
+          progress.write({ file: filename, loaded: prog.loaded });
+        }).send(function(err) {
+          next(err);
+        });
+      });
+    });
+    q.await(function(err) {
+      if (err) {
+        progress.emit('error', err);
+        return callback(err);
+      }
       progress.on('finish', callback);
       progress.end();
     });
