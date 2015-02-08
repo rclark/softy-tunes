@@ -48,7 +48,7 @@ function getAlbum(artist, album, folder, callback) {
     folder = null;
   }
 
-  folder = folder || __dirname;
+  folder = folder || process.cwd();
   folder = path.join(folder, artist, album);
   callback = callback || function() {};
 
