@@ -1,0 +1,33 @@
+{
+  "name": "softy-tunes",
+  "version": "1.0.0",
+  "description": "Personal music management",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/*.test.js"
+  },
+  "bin": {
+    "softy-tunes": "bin/softy-tunes.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rclark/muzak.git"
+  },
+  "author": "Ryan Clark",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rclark/muzak/issues"
+  },
+  "homepage": "https://github.com/rclark/muzak",
+  "dependencies": {
+    "aws-sdk": "^2.1.8",
+    "inquirer": "^0.8.0",
+    "minimist": "^1.1.0",
+    "mkdirp": "^0.5.0",
+    "progress-stream": "^0.5.0",
+    "queue-async": "^1.0.7"
+  },
+  "devDependencies": {
+    "tape": "^3.5.0"
+  }
+}
