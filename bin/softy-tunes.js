@@ -5,7 +5,7 @@ var music = require('..'),
     inquirer = require('inquirer'),
     args = require('minimist')(process.argv.slice(2)),
     path = require('path'),
-    bits, album, artist,
+    bits, album, artist, folder,
     command = args._[0];
 
 command = command || 'get';
@@ -53,9 +53,10 @@ if (command === 'put') {
     process.exit(1);
   }
 
-  if (args.folder.slice(-1) === '/') args.folder = args.folder.slice(0, -1);
-  args.folder = args.folder.replace('/\\ /g', ' ');
-  bits = args.folder.split(path.sep);
+  folder = path.resolve(args.folder);
+  if (folder.slice(-1) === '/') folder = folder.slice(0, -1);
+  folder = folder.replace('/\\ /g', ' ');
+  bits = folder.split(path.sep);
   album = bits.pop();
   artist = bits.pop();
 
@@ -76,7 +77,7 @@ if (command === 'put') {
       process.exit(1);
     }
 
-    music.uploadAlbum(artist, album, path.resolve(args.folder))
+    music.uploadAlbum(artist, album, folder)
       .on('progress', function(percent) {
         util.print(
           util.format(
